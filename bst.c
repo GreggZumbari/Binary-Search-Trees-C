@@ -312,8 +312,11 @@ int bst_contains(int val, struct bst* bst) {
  * This is the structure you will use to create an in-order BST iterator.  It
  * is up to you how to define this structure.
  */
-struct bst_iterator;
-
+struct bst_iterator {
+  int list[10000];
+  int eye;
+  int size;
+};
 
 /*
  * Self-made function which is meant to be used recursively to count every node
@@ -472,6 +475,17 @@ int bst_path_sum(int sum, struct bst* bst) {
   return bool_Exists;
 }
 
+void bst_iterator_caterpillar(struct bst_node* node, struct bst_iterator* iterator) {
+  //This algorithm is based on the information found on this page: https://www.geeksforgeeks.org/tree-traversals-inorder-preorder-and-postorder/
+  if (node) {
+    //Left child, current, then right child.
+    bst_iterator_caterpillar(node->left, iterator);
+    iterator->list[iterator->eye] = node->val;
+    (iterator->eye)++;
+    bst_iterator_caterpillar(node->right, iterator);
+  }
+  return;
+}
 
 /*
  * This function should allocate and initialize a new in-order BST iterator
@@ -486,17 +500,29 @@ int bst_path_sum(int sum, struct bst* bst) {
  *   value in bst (i.e. the leftmost value in the tree).
  */
 struct bst_iterator* bst_iterator_create(struct bst* bst) {
-  return NULL;
+  //Make the thing
+  struct bst_iterator* iterator = malloc(sizeof(struct bst_iterator));
+  iterator->eye = 0;
+
+  //Put the in-order list of nodes into the iterator
+  bst_iterator_caterpillar(bst->root, iterator);
+
+  //Reset the counter and set the size
+  iterator->size = iterator->eye; //I could just use bst_size() - 1 to get this, but the value is already in iterator->eye, so I'm just using that
+  iterator->eye = 0;
+
+  return iterator;
 }
 
 /*
  * This function should free all memory allocated to a BST iterator.
  *
  * Params:
- *   iter - the iterator whose memory is to be freed.  May not be NULL.
+ *   iter - the iterator whose memory is to be freed. May not be NULL.
  */
 void bst_iterator_free(struct bst_iterator* iter) {
-
+  assert(iter);
+  free(iter); //No pointers or malloc(), baby!
 }
 
 
@@ -509,7 +535,12 @@ void bst_iterator_free(struct bst_iterator* iter) {
  *   iter - the iterator to be checked for more values.  May not be NULL.
  */
 int bst_iterator_has_next(struct bst_iterator* iter) {
-  return 0;
+  if (iter->eye < iter->size) {
+    return 1;
+  }
+  else {
+    return 0;
+  }
 }
 
 
@@ -522,5 +553,7 @@ int bst_iterator_has_next(struct bst_iterator* iter) {
  *     and must have at least one more value to be returned.
  */
 int bst_iterator_next(struct bst_iterator* iter) {
-  return 0;
+  int out = iter->list[iter->eye];
+  (iter->eye)++;
+  return out;
 }
